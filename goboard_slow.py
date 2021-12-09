@@ -1,5 +1,5 @@
 import copy
-from dlgo.gotypes import Player
+from gotypes import Player
 
 
 class Move():
@@ -159,9 +159,9 @@ class GameState():
 
 	@property
 	def situation(self):
-		return (self.next_player, self.board)
+		return self.next_player, self.board
 
-	def does_move_violate_ko(self, move):
+	def does_move_violate_ko(self, player, move):
 		if not move.is_play:
 			return False
 		next_board = copy.deepcopy(self.board)
@@ -174,7 +174,7 @@ class GameState():
 			past_state = past_state.previous_state
 		return False
 
-	def is_valid(self, move):
+	def is_valid_move(self, move):
 		if self.is_over():
 			return False
 		if move.is_pass or move.is_resign:
