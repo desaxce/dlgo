@@ -1,7 +1,8 @@
 import copy
 
 import zobrist
-from gotypes import Player
+from gotypes import Player, Point
+from scoring import compute_game_result
 
 
 class Move():
@@ -146,6 +147,14 @@ class GameState:
 				{(previous.next_player, previous.board.zobrist_hash())})
 		self.last_move = move
 
+	def winner(self):
+		if not self.is_over():
+			return None
+		if self.last_move.is_resign:
+			return self.next_player
+		game_result = compute_game_result(self)
+		return game_result.winner
+
 	def apply_move(self, move):
 		if move.is_play:
 			next_board = copy.deepcopy(self.board)
@@ -200,3 +209,16 @@ class GameState:
 			self.board.get(move.point) is None and
 			not self.is_move_self_capture(self.next_player, move) and
 			not self.does_move_violate_ko(self.next_player, move))
+
+	def legal_moves(self):
+		moves = []
+		for row in range(1, self.board.num_rows + 1):
+			for col in range(1, self.board.num_cols + 1):
+				move = Move.play(Point(row, col))
+				if self.is_valid_move(move):
+					moves.append(move)
+		# These two moves are always legal.
+		moves.append(Move.pass_turn())
+		moves.append(Move.resign())
+
+		return moves
