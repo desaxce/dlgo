@@ -3,6 +3,7 @@ import math
 import agent.base
 from MCTSNode import MCTSNode
 from agent import naive
+from goboard import Move
 from gotypes import Player
 
 
@@ -35,6 +36,8 @@ class MCTSAgent(agent.base.Agent):
             if child_pct > best_pct:
                 best_pct = child_pct
                 best_move = child.move
+        if best_pct < 0.1:
+            return Move.resign()
         return best_move
 
     def select_child(self, node: MCTSNode):
