@@ -1,5 +1,5 @@
+import goboard
 from agent import naive
-import goboard_slow
 import gotypes
 from utils import print_board, print_move
 import time
@@ -7,7 +7,7 @@ import time
 
 def main():
     board_size = 9
-    game = goboard_slow.GameState.new_game(board_size)
+    game = goboard.GameState.new_game(board_size)
     bots = {
         gotypes.Player.black: naive.RandomBot(),
         gotypes.Player.white: naive.RandomBot(),
@@ -21,6 +21,7 @@ def main():
         bot_move = bots[game.next_player].select_move(game)
         print_move(game.next_player, bot_move)
         game = game.apply_move(bot_move)
+    print(f"Winner is {game.winner()}")
 
 
 if __name__ == '__main__':

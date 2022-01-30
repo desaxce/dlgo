@@ -2,14 +2,14 @@ from six.moves import input
 
 import goboard
 import gotypes
-from agent.alphabeta import MinimaxAgentAlphaBeta
+from agent.MCTSAgent import MCTSAgent
 from utils import print_board, point_from_coords, print_move
 
 
 def main():
     board_size = 4
     game = goboard.GameState.new_game(board_size)
-    bot = MinimaxAgentAlphaBeta()
+    bot = MCTSAgent()
 
     while not game.is_over():
         print(chr(27) + "[2J")
