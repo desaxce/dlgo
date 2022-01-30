@@ -127,7 +127,7 @@ class Board:
 			return None
 		return string.color
 
-	def get_go_string(self, point):
+	def get_go_string(self, point) -> GoString:
 		string = self._grid.get(point)
 		if string is None:
 			return None
@@ -136,7 +136,7 @@ class Board:
 
 class GameState:
 	def __init__(self, board, next_player, previous, move):
-		self.board = board
+		self.board: Board = board
 		self.next_player = next_player
 		self.previous_state = previous
 		if self.previous_state is None:
