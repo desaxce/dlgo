@@ -36,8 +36,10 @@ class MCTSAgent(agent.base.Agent):
             if child_pct > best_pct:
                 best_pct = child_pct
                 best_move = child.move
-        if best_pct < 0.1:
-            return Move.resign()
+        # Polite strategy to resign when winning probability < 10%.
+        # Commented out to generate games.
+        # if best_pct < 0.1:
+        #     return Move.resign()
         return best_move
 
     def select_child(self, node: MCTSNode):

@@ -19,7 +19,7 @@ class OnePlaneEncoder(Encoder):
         for r in range(self.board_height):
             for c in range(self.board_width):
                 p = Point(row=r + 1, col=c + 1)
-                go_string = game_state.board.get_go_string()
+                go_string = game_state.board.get_go_string(p)
                 if go_string is None:
                     continue
                 if go_string.color == next_player:

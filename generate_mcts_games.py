@@ -58,8 +58,11 @@ def main():
         xs.append(x)
         ys.append(y)
 
-    x = np.concatenate(args.board_out, xs)
-    y = np.concatenate(args.move_out, y)
+    x = np.concatenate(xs)
+    y = np.concatenate(ys)
+
+    np.save(args.board_out, x)
+    np.save(args.move_out, y)
 
 
 if __name__ == '__main__':
