@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import copy
+from typing import Dict
 
 import zobrist
 from gotypes import Player, Point
 from scoring import compute_game_result
 
 
-neighbor_tables = {}
-corner_tables = {}
+neighbor_tables: dict[Point, [Point]] = {}
+corner_tables: dict[Point, [Point]] = {}
 
 
 def init_neighbor_table(dim):
@@ -104,7 +105,7 @@ class Board:
     def __init__(self, num_rows, num_cols):
         self.num_rows = num_rows
         self.num_cols = num_cols
-        self._grid = {}
+        self._grid: dict[Point, GoString] = {}
         self._hash = zobrist.EMPTY_BOARD
 
         global neighbor_tables
@@ -113,8 +114,8 @@ class Board:
             init_neighbor_table(dim)
         if dim not in corner_tables:
             init_corner_table(dim)
-        self.neighbor_table = neighbor_tables[dim]
-        self.corner_table = corner_tables[dim]
+        self.neighbor_table: [Point] = neighbor_tables[dim]
+        self.corner_table: [Point] = corner_tables[dim]
 
     def neighbors(self, point):
         return self.neighbor_table[point]
@@ -124,13 +125,13 @@ class Board:
 
     def place_stone(self, player, point):
         assert self.is_on_grid(point)
+        if self._grid.get(point) is not None:
+            print(f"Illegal play on {str(point)}")
         assert self._grid.get(point) is None
         adjacent_same_color = []
         adjacent_opposite_color = []
         liberties = []
-        for neighbor in point.neighbors():
-            if not self.is_on_grid(neighbor):
-                continue
+        for neighbor in self.neighbor_table[point]:
             neighbor_string = self._grid.get(neighbor)
             if neighbor_string is None:
                 liberties.append(neighbor)
@@ -146,7 +147,8 @@ class Board:
             new_string = new_string.merged_with(same_color_string)
         for new_string_point in new_string.stones:
             self._grid[new_string_point] = new_string
-            self._hash ^= zobrist.HASH_CODE[point, player]
+        self._hash ^= zobrist.HASH_CODE[point, None]
+        self._hash ^= zobrist.HASH_CODE[point, player]
 
         for other_color_string in adjacent_opposite_color:
             replacement = other_color_string.without_liberty(point)
@@ -161,7 +163,7 @@ class Board:
 
     def _remove_string(self, string):
         for point in string.stones:
-            for neighbor in point.neighbors():
+            for neighbor in self.neighbor_table[point]:
                 neighbor_string = self._grid.get(neighbor)
                 if neighbor_string is None:
                     continue
@@ -169,6 +171,47 @@ class Board:
                     self._replace_string(neighbor_string.with_liberty(point))
             self._grid[point] = None
             self._hash ^= zobrist.HASH_CODE[point, string.color]
+            self._hash ^= zobrist.HASH_CODE[point, None]
+
+    def is_self_capture(self, player, point):
+        friendly_strings = []
+        for neighbor in self.neighbor_table[point]:
+            neighbor_string = self._grid.get(neighbor)
+            if neighbor_string is None:
+                return False
+            elif neighbor_string.color == player:
+                friendly_strings.append(neighbor_string)
+            else:
+                if neighbor_string.num_liberties == 1:
+                    return False
+        if all(neighbor_string.num_liberties == 1 for neighbor_string in friendly_strings):
+            return True
+
+    def will_capture(self, player, point):
+        for neighbor in self.neighbor_table[point]:
+            neighbor_string = self._grid.get(neighbor)
+            if neighbor_string is None:
+                continue
+            elif neighbor_string.color == player:
+                continue
+            else:
+                if neighbor_string.num_liberties == 1:
+                    return True
+        return False
+
+    def __eq__(self, other):
+        return isinstance(other, Board) and \
+            self.num_rows == other.num_rows and \
+            self.num_cols == other.num_cols and \
+            self._hash() == other._hash()
+
+    def __deepcopy__(self, memodict={}):
+        copied = Board(self.num_rows, self.num_cols)
+        # Shallow copy is faster: allowed because the dictionary
+        # maps tuples to GoStrings, both immutable.
+        copied._grid = copy.copy(self._grid)
+        copied._hash = self._hash
+        return copied
 
     def zobrist_hash(self):
         return self._hash
