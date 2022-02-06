@@ -1,14 +1,15 @@
 import math
 
-import agent.base
+from agent.base import Agent
 from MCTSNode import MCTSNode
 from agent import naive
-from goboard import Move
+from agent.naive_fast import FastRandomBot
 from gotypes import Player
 
 
-class MCTSAgent(agent.base.Agent):
+class MCTSAgent(Agent):
     def __init__(self, num_rounds: int = 100, temperature: int = 1.5):
+        Agent.__init__(self)
         self.num_rounds = num_rounds
         self.temperature = temperature
 
@@ -44,15 +45,14 @@ class MCTSAgent(agent.base.Agent):
 
     def select_child(self, node: MCTSNode):
         total_rollouts = sum(child.num_rollouts for child in node.children)
+        log_rollouts = math.log(total_rollouts)
 
         best_score = -1
         best_child = None
         for child in node.children:
-            score = uct_score(
-                total_rollouts,
-                child.num_rollouts,
-                child.winning_pct(node.game_state.next_player),
-                self.temperature)
+            win_pct = child.winning_pct(node.game_state.next_player)
+            exploration = math.sqrt(log_rollouts / child.num_rollouts)
+            score = win_pct + self.temperature * exploration
 
             if score > best_score:
                 best_score = score
@@ -60,6 +60,7 @@ class MCTSAgent(agent.base.Agent):
         return best_child
 
 
+# Not used because we rather refactor the log of rollouts outside this function
 def uct_score(parent_rollouts, child_rollouts, win_pct, temperature):
     exploration = math.sqrt(math.log(parent_rollouts) / child_rollouts)
     return win_pct + temperature * exploration
@@ -67,8 +68,8 @@ def uct_score(parent_rollouts, child_rollouts, win_pct, temperature):
 
 def simulate_random_game(game_state):
     bots = {
-        Player.black: naive.RandomBot(),
-        Player.white: naive.RandomBot(),
+        Player.black: FastRandomBot(),
+        Player.white: FastRandomBot(),
     }
     while not game_state.is_over():
         bot_move = bots[game_state.next_player].select_move(game_state)
