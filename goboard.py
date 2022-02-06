@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import copy
-from typing import Dict
 
 import zobrist
 from gotypes import Player, Point
@@ -47,6 +46,10 @@ def init_corner_table(dim):
     corner_tables[dim] = new_table
 
 
+class IllegalMMoveError(Exception):
+    pass
+
+
 class Move:
     def __init__(self, point=None, is_pass=False, is_resign=False):
         assert (point is not None) ^ is_pass ^ is_resign
@@ -66,6 +69,33 @@ class Move:
     @classmethod
     def resign(cls):
         return Move(is_resign=True)
+
+    def __str__(self):
+        if self.is_pass:
+            return 'pass'
+        if self.is_resign:
+            return 'resign'
+        return f"(r {self.point.row}, c {self.point.col})"
+
+    def __hash__(self):
+        return hash((
+            self.is_play,
+            self.is_pass,
+            self.is_resign,
+            self.point
+        ))
+
+    def __eq__(self, other):
+        return (
+            self.is_play,
+            self.is_pass,
+            self.is_resign,
+            self.point) == (
+            other.is_play,
+            other.is_pass,
+            other.is_resign,
+            other.point
+        )
 
 
 class GoString:
@@ -94,11 +124,14 @@ class GoString:
     def num_liberties(self):
         return len(self.liberties)
 
-    def eq(self, other):
+    def __eq__(self, other):
         return isinstance(other, GoString) and \
                self.color == other.color and \
                self.stones == other.stones and \
                self.liberties == other.liberties
+
+    def __deepcopy__(self, memodict={}):
+        return GoString(self.color, self.stones, copy.deepcopy(self.liberties))
 
 
 class Board:
@@ -282,10 +315,7 @@ class GameState:
     def is_move_self_capture(self, player, move):
         if not move.is_play:
             return False
-        next_board = copy.deepcopy(self.board)
-        next_board.place_stone(player, move.point)
-        new_string = next_board.get_go_string(move.point)
-        return new_string.num_liberties == 0
+        return self.board.is_self_capture(player, move.point)
 
     @property
     def situation(self):
@@ -293,6 +323,8 @@ class GameState:
 
     def does_move_violate_ko(self, player, move):
         if not move.is_play:
+            return False
+        if not self.board.will_capture(player, move.point):
             return False
         next_board = copy.deepcopy(self.board)
         next_board.place_stone(self.next_player, move.point)

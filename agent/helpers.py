@@ -31,8 +31,6 @@ def is_point_an_eye(board: Board, point, color):
     return friendly_corners >= 3
 
 
-
-
 def capture_diff(game_state):
     black_stones = 0
     white_stones = 0
