@@ -20,7 +20,9 @@ def generate_game(board_size, rounds, max_moves, temperature):
     num_moves = 0
     while not game.is_over():
         print_board(game.board)
+        print(f"Selecting move # {num_moves+1}...")
         move = bot.select_move(game)
+        print(f"Selected move # {num_moves+1}!")
         if move.is_play:
             boards.append(encoder.encode(game))
 
