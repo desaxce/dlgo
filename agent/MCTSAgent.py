@@ -17,6 +17,8 @@ class MCTSAgent(Agent):
         root = MCTSNode(game_state)
 
         for i in range(self.num_rounds):
+            if i % 100 == 0:
+                print(f"\tRunning round # {i}")
             node = root
             while (not node.can_add_child()) and (not node.is_terminal()):
                 node = self.select_child(node)
